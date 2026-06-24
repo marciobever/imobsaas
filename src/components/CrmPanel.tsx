@@ -3,7 +3,8 @@ import {
   BarChart3, Users2, ShieldAlert, KeyRound, CalendarDays, FileText, CheckCircle2, 
   Settings2, Search, Bell, Plus, Filter, Kanban as KanbanIcon, ListFilter, 
   PhoneCall, MessageSquare, Clock, MapPin, Building2, UserCheck, DollarSign, 
-  FileCheck, ShieldCheck, TrendingUp, AlertTriangle, CheckSquare, Edit, Trash2, Save 
+  FileCheck, ShieldCheck, TrendingUp, AlertTriangle, CheckSquare, Edit, Trash2, Save,
+  Menu, X
 } from 'lucide-react';
 import { 
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -45,6 +46,12 @@ export default function CrmPanel({
   onUpdateTaskStatus
 }: CrmPanelProps) {
   const [activeMenu, setActiveMenu] = useState<string>('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const selectMenu = (menu: string) => {
+    setActiveMenu(menu);
+    setIsSidebarOpen(false);
+  };
   
   // Local state for searching/filtering
   const [leadSearch, setLeadSearch] = useState('');
@@ -266,24 +273,43 @@ export default function CrmPanel({
   return (
     <div className="flex h-screen bg-slate-900 text-slate-100 overflow-hidden font-sans">
       
+      {/* Backdrop para Sidebar em telas menores */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-950/80 z-40 lg:hidden transition-opacity duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+      
       {/* SIDEBAR DO PAINEL */}
-      <aside className="w-64 bg-slate-950 shrink-0 border-r border-slate-800 flex flex-col justify-between p-5">
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-slate-950 shrink-0 border-r border-slate-800 flex flex-col justify-between p-5 transform transition-transform duration-350 ease-in-out lg:translate-x-0 ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
         <div>
           {/* Header de Marca */}
-          <div className="flex items-center gap-2 mb-8 px-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-600 text-slate-950 flex items-center justify-center font-bold text-base">
-              A
+          <div className="flex items-center justify-between mb-8 px-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-600 text-slate-950 flex items-center justify-center font-bold text-base">
+                A
+              </div>
+              <div>
+                <h2 className="text-xs font-bold tracking-tight text-white uppercase">{settings.name}</h2>
+                <span className="text-[10px] text-amber-500 font-mono tracking-wider font-semibold">CRM OPERACIONAL</span>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xs font-bold tracking-tight text-white uppercase">{settings.name}</h2>
-              <span className="text-[10px] text-amber-500 font-mono tracking-wider font-semibold">CRM OPERACIONAL</span>
-            </div>
+            
+            <button 
+              onClick={() => setIsSidebarOpen(false)}
+              className="lg:hidden p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Menus */}
           <nav className="space-y-1">
             <button 
-              onClick={() => setActiveMenu('dashboard')}
+              onClick={() => selectMenu('dashboard')}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-semibold transition-all ${
                 activeMenu === 'dashboard' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-850'
               }`}
@@ -293,7 +319,7 @@ export default function CrmPanel({
             </button>
 
             <button 
-              onClick={() => setActiveMenu('leads')}
+              onClick={() => selectMenu('leads')}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-semibold transition-all ${
                 activeMenu === 'leads' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-850'
               }`}
@@ -303,7 +329,7 @@ export default function CrmPanel({
             </button>
 
             <button 
-              onClick={() => setActiveMenu('properties')}
+              onClick={() => selectMenu('properties')}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-semibold transition-all ${
                 activeMenu === 'properties' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-850'
               }`}
@@ -313,7 +339,7 @@ export default function CrmPanel({
             </button>
 
             <button 
-              onClick={() => setActiveMenu('owners')}
+              onClick={() => selectMenu('owners')}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-semibold transition-all ${
                 activeMenu === 'owners' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-850'
               }`}
@@ -323,7 +349,7 @@ export default function CrmPanel({
             </button>
 
             <button 
-              onClick={() => setActiveMenu('brokers')}
+              onClick={() => selectMenu('brokers')}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-semibold transition-all ${
                 activeMenu === 'brokers' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-850'
               }`}
@@ -333,7 +359,7 @@ export default function CrmPanel({
             </button>
 
             <button 
-              onClick={() => setActiveMenu('agenda')}
+              onClick={() => selectMenu('agenda')}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-semibold transition-all ${
                 activeMenu === 'agenda' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-850'
               }`}
@@ -343,7 +369,7 @@ export default function CrmPanel({
             </button>
 
             <button 
-              onClick={() => setActiveMenu('propostas')}
+              onClick={() => selectMenu('propostas')}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-semibold transition-all ${
                 activeMenu === 'propostas' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-850'
               }`}
@@ -353,7 +379,7 @@ export default function CrmPanel({
             </button>
 
             <button 
-              onClick={() => setActiveMenu('locacao')}
+              onClick={() => selectMenu('locacao')}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-semibold transition-all ${
                 activeMenu === 'locacao' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-850'
               }`}
@@ -383,9 +409,18 @@ export default function CrmPanel({
       <main className="flex-1 bg-slate-900 overflow-y-auto flex flex-col h-full">
         {/* Topbar do CRM */}
         <header className="h-16 border-b border-slate-850 px-6 shrink-0 flex items-center justify-between bg-slate-950/60 backdrop-blur-md">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-[10px] font-mono font-bold tracking-wider text-slate-400 uppercase">Ambiente Conectado</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden p-1.5 -ml-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              title="Abrir menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[10px] font-mono font-bold tracking-wider text-slate-400 uppercase">Ambiente Conectado</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -679,8 +714,8 @@ export default function CrmPanel({
                 </div>
               ) : (
                 /* SE TABELA LEADS */
-                <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden">
-                  <table className="w-full text-left text-xs border-collapse">
+                <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse min-w-[650px]">
                     <thead>
                       <tr className="bg-slate-900 text-slate-400 font-bold border-b border-slate-800">
                         <th className="p-3">Nome</th>
@@ -921,8 +956,8 @@ export default function CrmPanel({
               </div>
 
               {/* Tabela de Imóveis */}
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden">
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse min-w-[800px]">
                   <thead>
                     <tr className="bg-slate-900 text-slate-400 font-bold border-b border-slate-800">
                       <th className="p-3">Ref Código</th>
@@ -1082,7 +1117,7 @@ export default function CrmPanel({
                 
                 <div className="space-y-3">
                   {tasks.filter(t => t.type === 'Visita').map((v) => (
-                    <div key={v.id} className="p-4 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
+                    <div key={v.id} className="p-4 bg-slate-900 border border-slate-800 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-amber-600/10 text-amber-500 flex items-center justify-center">
                           <CalendarDays className="w-5 h-5" />
@@ -1119,8 +1154,8 @@ export default function CrmPanel({
                 <p className="text-xs text-slate-500 mt-1">Lista de propostas enviadas de compra e aluguel sob curadoria técnica.</p>
               </div>
 
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden">
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse min-w-[700px]">
                   <thead>
                     <tr className="bg-slate-900 text-slate-400 font-bold border-b border-slate-800">
                       <th className="p-3">Comprador (Lead)</th>

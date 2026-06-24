@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, MapPin, BedDouble, Bath, Car, Maximize2, Phone, Calendar, Heart, Shield, Landmark, Sparkles, Building2, HelpCircle, ArrowRight, Share2, Upload, CheckCircle2, Star } from 'lucide-react';
+import { Search, MapPin, BedDouble, Bath, Car, Maximize2, Phone, Calendar, Heart, Shield, Landmark, Sparkles, Building2, HelpCircle, ArrowRight, Share2, Upload, CheckCircle2, Star, Home } from 'lucide-react';
 import { Property, NeighborhoodStats, AgencySettings, Broker, Owner } from '../types';
 
 interface PublicPortalProps {
@@ -231,7 +231,7 @@ export default function PublicPortal({
   }, [properties, selectedPropertyId]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800 font-sans">
+    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800 font-sans pb-16 md:pb-0">
       {/* Header Público */}
       <header id="public_header" className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm transition-all">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -311,7 +311,7 @@ export default function PublicPortal({
 
           {/* Galeria de Fotos */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 rounded-2xl overflow-hidden shadow-md">
-            <div className="md:col-span-2 h-[450px]">
+            <div className="md:col-span-2 h-[220px] sm:h-[320px] md:h-[450px]">
               <img 
                 src={selectedProperty.images[0] || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'} 
                 alt={selectedProperty.title}
@@ -368,23 +368,23 @@ export default function PublicPortal({
               </div>
 
               {/* Ficha técnica rápida */}
-              <div className="grid grid-cols-4 gap-4 p-5 bg-white border border-slate-100 rounded-2xl shadow-xs text-center">
-                <div className="space-y-1">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 bg-white border border-slate-100 rounded-2xl shadow-xs text-center">
+                <div className="space-y-1 p-1">
                   <BedDouble className="w-5 h-5 mx-auto text-amber-700" />
                   <p className="text-xs text-slate-400">Suítes / Quartos</p>
                   <p className="font-semibold text-sm text-slate-900">{selectedProperty.suites} S / {selectedProperty.bedrooms} Q</p>
                 </div>
-                <div className="space-y-1 border-l border-slate-100">
+                <div className="space-y-1 p-1 border-l border-slate-100">
                   <Bath className="w-5 h-5 mx-auto text-amber-700" />
                   <p className="text-xs text-slate-400">Banheiros</p>
                   <p className="font-semibold text-sm text-slate-900">{selectedProperty.bathrooms}</p>
                 </div>
-                <div className="space-y-1 border-l border-slate-100">
+                <div className="space-y-1 p-1 border-t md:border-t-0 md:border-l border-slate-100">
                   <Car className="w-5 h-5 mx-auto text-amber-700" />
                   <p className="text-xs text-slate-400">Vagas</p>
                   <p className="font-semibold text-sm text-slate-900">{selectedProperty.parkingSpaces}</p>
                 </div>
-                <div className="space-y-1 border-l border-slate-100">
+                <div className="space-y-1 p-1 border-t border-l md:border-t-0 md:border-l border-slate-100">
                   <Maximize2 className="w-5 h-5 mx-auto text-amber-700" />
                   <p className="text-xs text-slate-400">Área Privativa</p>
                   <p className="font-semibold text-sm text-slate-900">{selectedProperty.areaPrivativa} m²</p>
@@ -1263,6 +1263,46 @@ export default function PublicPortal({
           <p>© 2026 Apex Imóveis Corp. Todos os direitos reservados.</p>
         </div>
       </footer>
+
+      {/* Mobile Bottom Navigation */}
+      <div id="mobile-bottom-nav" className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 md:hidden flex justify-around items-center h-16 px-4 shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
+        <button
+          onClick={() => { setSelectedPropertyId(null); setActiveTab('home'); }}
+          className={`flex flex-col items-center justify-center w-16 h-full transition-all ${
+            activeTab === 'home' && !selectedPropertyId ? 'text-amber-700' : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <Home className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-1">Início</span>
+        </button>
+        <button
+          onClick={() => { setSelectedPropertyId(null); setActiveTab('catalogo'); }}
+          className={`flex flex-col items-center justify-center w-16 h-full transition-all ${
+            activeTab === 'catalogo' && !selectedPropertyId ? 'text-amber-700' : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <Search className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-1">Buscar</span>
+        </button>
+        <button
+          onClick={() => { setSelectedPropertyId(null); setActiveTab('bairros'); }}
+          className={`flex flex-col items-center justify-center w-16 h-full transition-all ${
+            activeTab === 'bairros' && !selectedPropertyId ? 'text-amber-700' : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <MapPin className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-1">Bairros</span>
+        </button>
+        <button
+          onClick={() => { setSelectedPropertyId(null); setActiveTab('anunciar'); }}
+          className={`flex flex-col items-center justify-center w-16 h-full transition-all ${
+            activeTab === 'anunciar' && !selectedPropertyId ? 'text-amber-700' : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <Upload className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-1">Anunciar</span>
+        </button>
+      </div>
     </div>
   );
 }

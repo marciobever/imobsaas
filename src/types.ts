@@ -174,3 +174,17 @@ export interface AgencySettings {
   seoTitle: string;
   seoDescription: string;
 }
+
+export interface SocialMediaSchedule {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  propertyCode: string;
+  propertyImage: string;
+  dayOfWeek: 'Segunda-feira' | 'Terça-feira' | 'Quarta-feira' | 'Quinta-feira' | 'Sexta-feira' | 'Sábado' | 'Domingo';
+  platform: 'Instagram' | 'Facebook' | 'LinkedIn' | 'TikTok';
+  scheduledTime: string;
+  caption: string;
+  status: 'Agendado' | 'Publicado' | 'Pendente';
+}
+

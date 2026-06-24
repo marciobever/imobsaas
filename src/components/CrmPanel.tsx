@@ -10,7 +10,7 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
-import { Property, Lead, Task, Owner, Broker, Proposal, Rental, AgencySettings, LeadStage } from '../types';
+import { Property, Lead, Task, Owner, Broker, Proposal, Rental, AgencySettings, LeadStage, SocialMediaSchedule } from '../types';
 
 interface CrmPanelProps {
   properties: Property[];
@@ -21,12 +21,18 @@ interface CrmPanelProps {
   proposals: Proposal[];
   rentals: Rental[];
   settings: AgencySettings;
+  socialMediaSchedules: SocialMediaSchedule[];
   onUpdateLeadStage: (leadId: string, newStage: LeadStage) => void;
   onAddLeadInteraction: (leadId: string, type: any, content: string) => void;
   onAddProperty: (property: Property) => void;
   onAddLead: (lead: any) => void;
   onAddTask: (task: Task) => void;
   onUpdateTaskStatus: (taskId: string, status: 'Pendente' | 'Concluída') => void;
+  onAddProposal: (proposal: Proposal) => void;
+  onUpdateProposalStatus: (proposalId: string, status: any) => void;
+  onAddSocialMediaSchedule: (schedule: SocialMediaSchedule) => void;
+  onUpdateSocialMediaSchedule: (scheduleId: string, updatedFields: Partial<SocialMediaSchedule>) => void;
+  onDeleteSocialMediaSchedule: (scheduleId: string) => void;
 }
 
 export default function CrmPanel({
@@ -38,12 +44,18 @@ export default function CrmPanel({
   proposals,
   rentals,
   settings,
+  socialMediaSchedules,
   onUpdateLeadStage,
   onAddLeadInteraction,
   onAddProperty,
   onAddLead,
   onAddTask,
-  onUpdateTaskStatus
+  onUpdateTaskStatus,
+  onAddProposal,
+  onUpdateProposalStatus,
+  onAddSocialMediaSchedule,
+  onUpdateSocialMediaSchedule,
+  onDeleteSocialMediaSchedule
 }: CrmPanelProps) {
   const [activeMenu, setActiveMenu] = useState<string>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -63,6 +75,23 @@ export default function CrmPanel({
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
   const [isNewPropertyModalOpen, setIsNewPropertyModalOpen] = useState(false);
+  const [isNewProposalModalOpen, setIsNewProposalModalOpen] = useState(false);
+  const [isNewSocialModalOpen, setIsNewSocialModalOpen] = useState(false);
+
+  // New Proposal Form State
+  const [newProposalLeadId, setNewProposalLeadId] = useState('');
+  const [newProposalPropertyId, setNewProposalPropertyId] = useState('');
+  const [newProposalValue, setNewProposalValue] = useState('');
+  const [newProposalType, setNewProposalType] = useState<'Venda' | 'Aluguel'>('Venda');
+  const [newProposalNotes, setNewProposalNotes] = useState('');
+  const [newProposalBrokerId, setNewProposalBrokerId] = useState('b2');
+
+  // New Social Media Schedule Form State
+  const [newSocialPropertyId, setNewSocialPropertyId] = useState('');
+  const [newSocialDayOfWeek, setNewSocialDayOfWeek] = useState<'Segunda-feira' | 'Terça-feira' | 'Quarta-feira' | 'Quinta-feira' | 'Sexta-feira' | 'Sábado' | 'Domingo'>('Segunda-feira');
+  const [newSocialPlatform, setNewSocialPlatform] = useState<'Instagram' | 'Facebook' | 'LinkedIn' | 'TikTok'>('Instagram');
+  const [newSocialTime, setNewSocialTime] = useState('12:00');
+  const [newSocialCaption, setNewSocialCaption] = useState('');
 
   // New Lead Form State
   const [newLeadName, setNewLeadName] = useState('');
@@ -209,6 +238,86 @@ export default function CrmPanel({
     setNewPropSale('');
     setNewPropRent('');
     setNewPropCondo('');
+  };
+
+  // Handle Proposal Submission
+  const handleCreateProposalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const lead = leads.find(l => l.id === newProposalLeadId);
+    const property = properties.find(p => p.id === newProposalPropertyId);
+    const broker = brokers.find(b => b.id === newProposalBrokerId);
+
+    if (!lead || !property) {
+      alert("Por favor, selecione um Lead e um Imóvel.");
+      return;
+    }
+
+    const valueNum = Number(newProposalValue);
+    if (isNaN(valueNum) || valueNum <= 0) {
+      alert("Por favor, insira um valor válido para a proposta.");
+      return;
+    }
+
+    const newPr: Proposal = {
+      id: `pr_${Date.now()}`,
+      leadId: lead.id,
+      leadName: lead.name,
+      propertyId: property.id,
+      propertyTitle: property.title,
+      brokerId: broker ? broker.id : 'b2',
+      brokerName: broker ? broker.name : 'Roberto Shinyashiki',
+      type: newProposalType,
+      value: valueNum,
+      date: new Date().toISOString(),
+      status: 'Enviada',
+      notes: newProposalNotes,
+      history: [
+        `${new Date().toLocaleDateString('pt-BR')}: Proposta de R$ ${valueNum.toLocaleString('pt-BR')} registrada no CRM.`
+      ]
+    };
+
+    onAddProposal(newPr);
+    setIsNewProposalModalOpen(false);
+    
+    // Clear state
+    setNewProposalLeadId('');
+    setNewProposalPropertyId('');
+    setNewProposalValue('');
+    setNewProposalNotes('');
+  };
+
+  // Handle Social Media Scheduling Submission
+  const handleCreateSocialScheduleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const property = properties.find(p => p.id === newSocialPropertyId);
+
+    if (!property) {
+      alert("Por favor, selecione um Imóvel.");
+      return;
+    }
+
+    // Generate auto-caption if none provided
+    const captionToUse = newSocialCaption || `🏡 EXCLUSIVIDADE APEX! Confira esse maravilhoso(a) ${property.type} no bairro ${property.neighborhood}. Com ${property.bedrooms} quartos (${property.suites} suítes), ${property.parkingSpaces} vagas e ${property.areaPrivativa}m² de área privativa. Valor: R$ ${(property.priceSale || property.priceRent || 0).toLocaleString('pt-BR')}. Agende já sua visita! Código: ${property.code}. #ImovelDosSonhos #ApexImoveis #LuxoSP #CuradoriaImobiliaria`;
+
+    const newSch: SocialMediaSchedule = {
+      id: `sm_${Date.now()}`,
+      propertyId: property.id,
+      propertyTitle: property.title,
+      propertyCode: property.code,
+      propertyImage: property.images[0] || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80',
+      dayOfWeek: newSocialDayOfWeek,
+      platform: newSocialPlatform,
+      scheduledTime: newSocialTime,
+      caption: captionToUse,
+      status: 'Agendado'
+    };
+
+    onAddSocialMediaSchedule(newSch);
+    setIsNewSocialModalOpen(false);
+
+    // Clear state
+    setNewSocialPropertyId('');
+    setNewSocialCaption('');
   };
 
   const handleLogInteractionSubmit = (e: React.FormEvent) => {
@@ -386,6 +495,19 @@ export default function CrmPanel({
             >
               <ShieldCheck className="w-4 h-4 shrink-0" />
               <span>Esteira de Locação</span>
+            </button>
+
+            <button 
+              onClick={() => selectMenu('marketing')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-semibold transition-all ${
+                activeMenu === 'marketing' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-850'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4 shrink-0 text-amber-500" />
+              <span className="flex items-center justify-between w-full">
+                <span>Redes Sociais</span>
+                <span className="bg-amber-500/10 text-amber-400 font-mono text-[9px] px-1.5 py-0.5 rounded-full border border-amber-500/20 font-bold">NOVO</span>
+              </span>
             </button>
           </nav>
         </div>
@@ -1149,49 +1271,297 @@ export default function CrmPanel({
           {/* 7. PROPOSTAS */}
           {activeMenu === 'propostas' && (
             <div className="space-y-6 animate-fade-in">
-              <div className="border-b border-slate-850 pb-4">
-                <h3 className="text-base font-bold text-white uppercase">Gestão de Propostas Judiciais & Comerciais</h3>
-                <p className="text-xs text-slate-500 mt-1">Lista de propostas enviadas de compra e aluguel sob curadoria técnica.</p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-850 pb-4">
+                <div>
+                  <h3 className="text-base font-bold text-white uppercase">Gestão de Propostas Judiciais & Comerciais</h3>
+                  <p className="text-xs text-slate-500 mt-1">Lista de propostas enviadas de compra e aluguel sob curadoria técnica.</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    if (leads.length > 0) setNewProposalLeadId(leads[0].id);
+                    if (properties.length > 0) setNewProposalPropertyId(properties[0].id);
+                    setIsNewProposalModalOpen(true);
+                  }}
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2 rounded-lg flex items-center gap-1.5 self-stretch sm:self-auto justify-center"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Cadastrar Proposta</span>
+                </button>
               </div>
 
               <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+                <table className="w-full text-left text-xs border-collapse min-w-[850px]">
                   <thead>
                     <tr className="bg-slate-900 text-slate-400 font-bold border-b border-slate-800">
                       <th className="p-3">Comprador (Lead)</th>
                       <th className="p-3">Imóvel de Interesse</th>
                       <th className="p-3">Tipo</th>
                       <th className="p-3">Valor Oferecido</th>
-                      <th className="p-3">Status da Proposta</th>
-                      <th className="p-3 text-right">Ação</th>
+                      <th className="p-3">Status</th>
+                      <th className="p-3">Condições / Notas</th>
+                      <th className="p-3 text-right">Ação / Decisão</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-850 text-slate-300">
                     {proposals.map((pr) => (
                       <tr key={pr.id} className="hover:bg-slate-900 transition-colors">
-                        <td className="p-3 font-bold text-white">{pr.leadName}</td>
-                        <td className="p-3 text-slate-300">{pr.propertyTitle}</td>
-                        <td className="p-3 font-semibold">{pr.type}</td>
-                        <td className="p-3 font-mono font-bold text-slate-100">
+                        <td className="p-3">
+                          <div className="font-bold text-white">{pr.leadName}</div>
+                          <div className="text-[10px] text-slate-500 font-mono">Corretor: {pr.brokerName}</div>
+                        </td>
+                        <td className="p-3 text-slate-300 max-w-[200px] truncate" title={pr.propertyTitle}>
+                          {pr.propertyTitle}
+                        </td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            pr.type === 'Venda' ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-500/20' : 'bg-pink-600/10 text-pink-400 border border-pink-500/20'
+                          }`}>
+                            {pr.type}
+                          </span>
+                        </td>
+                        <td className="p-3 font-mono font-bold text-white">
                           R$ {pr.value.toLocaleString('pt-BR')}
                         </td>
                         <td className="p-3">
-                          <span className="bg-amber-600/10 text-amber-500 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                            pr.status === 'Aceita' ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-500/20' :
+                            pr.status === 'Recusada' ? 'bg-rose-600/10 text-rose-400 border border-rose-500/20' :
+                            pr.status === 'Contraproposta' ? 'bg-amber-600/10 text-amber-400 border border-amber-500/20' :
+                            'bg-slate-700/50 text-slate-400 border border-slate-650'
+                          }`}>
                             {pr.status}
                           </span>
                         </td>
+                        <td className="p-3 text-slate-400 italic text-[11px] max-w-[220px] truncate" title={pr.notes || 'Sem observações.'}>
+                          {pr.notes || 'Sem observações.'}
+                        </td>
                         <td className="p-3 text-right">
-                          <button 
-                            onClick={() => alert('Análise jurídica e financeira de certidões iniciada.')}
-                            className="bg-slate-800 hover:bg-slate-700 text-white font-bold px-2 py-1 rounded"
-                          >
-                            Analisar minutas
-                          </button>
+                          <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                            {pr.status === 'Enviada' || pr.status === 'Em Análise' ? (
+                              <>
+                                <button 
+                                  onClick={() => onUpdateProposalStatus(pr.id, 'Aceita')}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2 py-1 rounded"
+                                >
+                                  Aceitar
+                                </button>
+                                <button 
+                                  onClick={() => onUpdateProposalStatus(pr.id, 'Contraproposta')}
+                                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] px-2 py-1 rounded"
+                                >
+                                  Contraproposta
+                                </button>
+                                <button 
+                                  onClick={() => onUpdateProposalStatus(pr.id, 'Recusada')}
+                                  className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] px-2 py-1 rounded"
+                                >
+                                  Recusar
+                                </button>
+                              </>
+                            ) : (
+                              <button 
+                                onClick={() => onUpdateProposalStatus(pr.id, 'Em Análise')}
+                                className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] px-2 py-1 rounded"
+                              >
+                                Reavaliar
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* REDES SOCIAIS (MARKETING) */}
+          {activeMenu === 'marketing' && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-850 pb-4">
+                <div>
+                  <h3 className="text-base font-bold text-white uppercase">Calendário de Publicações diárias</h3>
+                  <p className="text-xs text-slate-500 mt-1">Gere legendas inteligentes e programe imóveis do portfólio para suas redes sociais diariamente.</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    if (properties.length > 0) setNewSocialPropertyId(properties[0].id);
+                    setIsNewSocialModalOpen(true);
+                  }}
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2 rounded-lg flex items-center gap-1.5 self-stretch sm:self-auto justify-center"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Programar Publicação</span>
+                </button>
+              </div>
+
+              {/* Grid de Dias da Semana */}
+              <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+                {(['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'] as const).map((day) => {
+                  const schedule = socialMediaSchedules.find(s => s.dayOfWeek === day);
+
+                  return (
+                    <div key={day} className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col justify-between min-h-[220px]">
+                      <div>
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 mb-2.5">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{day.split('-')[0]}</span>
+                          {schedule && (
+                            <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-900 px-1 py-0.5 rounded">
+                              {schedule.scheduledTime}
+                            </span>
+                          )}
+                        </div>
+
+                        {schedule ? (
+                          <div className="space-y-2">
+                            <div className="relative group">
+                              <img 
+                                src={schedule.propertyImage} 
+                                alt={schedule.propertyTitle} 
+                                className="w-full h-24 object-cover rounded-lg border border-slate-800"
+                                referrerPolicy="no-referrer"
+                              />
+                              <span className="absolute top-1 right-1 bg-slate-950/90 text-white font-mono text-[8px] font-bold px-1.5 py-0.5 rounded border border-slate-800">
+                                {schedule.propertyCode}
+                              </span>
+                            </div>
+                            <p className="text-[10px] font-bold text-white line-clamp-1">{schedule.propertyTitle}</p>
+                            
+                            <div className="flex items-center gap-1.5">
+                              <span className="bg-amber-500/10 text-amber-400 font-bold text-[8px] px-1.5 py-0.5 rounded uppercase">
+                                {schedule.platform}
+                              </span>
+                              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
+                                schedule.status === 'Publicado' ? 'bg-emerald-600/10 text-emerald-400' : 'bg-indigo-600/10 text-indigo-400'
+                              }`}>
+                                {schedule.status}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-6 text-center space-y-2">
+                            <p className="text-[10px] text-slate-600">Sem publicação</p>
+                            <button 
+                              onClick={() => {
+                                setNewSocialDayOfWeek(day);
+                                if (properties.length > 0) setNewSocialPropertyId(properties[0].id);
+                                setIsNewSocialModalOpen(true);
+                              }}
+                              className="text-[9px] font-bold text-amber-500 hover:text-amber-400 bg-slate-900 border border-slate-800 hover:bg-slate-850 px-2.5 py-1 rounded"
+                            >
+                              + Programar
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {schedule && (
+                        <div className="border-t border-slate-900 pt-2.5 mt-3 flex items-center justify-between gap-1">
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(schedule.caption);
+                              alert('Legenda profissional copiada para a área de transferência com sucesso!');
+                            }}
+                            className="bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-[9px] px-2 py-1 rounded flex-1 text-center"
+                            title={schedule.caption}
+                          >
+                            Copiar Legenda
+                          </button>
+                          
+                          <button 
+                            onClick={() => {
+                              const newStatus = schedule.status === 'Publicado' ? 'Agendado' : 'Publicado';
+                              onUpdateSocialMediaSchedule(schedule.id, { status: newStatus });
+                            }}
+                            className={`p-1 rounded ${schedule.status === 'Publicado' ? 'text-emerald-500 hover:bg-slate-900' : 'text-slate-500 hover:text-white hover:bg-slate-900'}`}
+                            title={schedule.status === 'Publicado' ? "Marcar como Agendado" : "Marcar como Publicado"}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button 
+                            onClick={() => {
+                              if (confirm('Deseja remover este agendamento de publicação?')) {
+                                onDeleteSocialMediaSchedule(schedule.id);
+                              }
+                            }}
+                            className="p-1 text-rose-500 hover:bg-slate-900 rounded"
+                            title="Remover agendamento"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Seção - Gerador de Legendas de Alta Conversão */}
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center gap-2 border-b border-slate-850 pb-3">
+                  <TrendingUp className="w-5 h-5 text-amber-500" />
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">Gerador Inteligente de Legendas Premium</h4>
+                    <p className="text-[10px] text-slate-500">Selecione qualquer imóvel do catálogo para gerar legendas focadas em engajamento instantâneo.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Selecione o Imóvel</label>
+                      <select 
+                        id="generator-property-select"
+                        className="w-full text-xs p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-white"
+                        onChange={(e) => {
+                          const prop = properties.find(p => p.id === e.target.value);
+                          if (prop) {
+                            const generated = `🔥 DESTAQUE DO PORTFÓLIO: ${prop.title}! \n\n📍 Localizado no cobiçado bairro ${prop.neighborhood}, este magnífico ${prop.type.toLowerCase()} oferece o melhor do design paulistano. \n\n📐 Detalhes Técnicos:\n• Área Privativa: ${prop.areaPrivativa}m²\n• Suítes de Luxo: ${prop.suites}\n• Vagas de Garagem: ${prop.parkingSpaces}\n• Acabamentos refinados de altíssima qualidade.\n\n💰 Valor de Curadoria: R$ ${(prop.priceSale || prop.priceRent || 0).toLocaleString('pt-BR')}\n\n📲 Viva essa experiência. Clique no botão de WhatsApp para falar com a equipe técnica da Apex e agendar sua visita exclusiva sob o código ${prop.code}. \n\n#ApexImoveis #LuxoSP #DesignContemporaneo #ApartamentoJardins #ImoveisDeLuxo`;
+                            const txtArea = document.getElementById('generator-caption-textarea') as HTMLTextAreaElement;
+                            if (txtArea) txtArea.value = generated;
+                          }
+                        }}
+                      >
+                        <option value="">Selecione...</option>
+                        {properties.map(p => (
+                          <option key={p.id} value={p.id}>[{p.code}] {p.title}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="text-[10px] text-slate-500 leading-relaxed">
+                      Dica: Copie a legenda gerada ao lado e use o botão acima para programar no dia desejado!
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2 space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Legenda Gerada Pronta para Uso</label>
+                    <textarea 
+                      id="generator-caption-textarea"
+                      rows={6}
+                      readOnly
+                      placeholder="Selecione um imóvel ao lado para ver a inteligência em copywriting gerar a legenda automaticamente..."
+                      className="w-full text-xs p-3 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 font-mono"
+                    ></textarea>
+                    <div className="flex justify-end pt-1">
+                      <button 
+                        onClick={() => {
+                          const txtArea = document.getElementById('generator-caption-textarea') as HTMLTextAreaElement;
+                          if (txtArea && txtArea.value) {
+                            navigator.clipboard.writeText(txtArea.value);
+                            alert('Copiado com sucesso!');
+                          } else {
+                            alert('Nenhuma legenda gerada ainda.');
+                          }
+                        }}
+                        className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 py-1.5 rounded"
+                      >
+                        Copiar Legenda Gerada
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1482,6 +1852,206 @@ export default function CrmPanel({
                 className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2.5 rounded-lg"
               >
                 Cadastrar Imóvel Comercial
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL - NOVA PROPOSTA */}
+      {isNewProposalModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h4 className="font-bold text-white text-sm uppercase tracking-wider">Nova Proposta Comercial</h4>
+              <button onClick={() => setIsNewProposalModalOpen(false)} className="text-slate-400 hover:text-white">✕</button>
+            </div>
+
+            <form onSubmit={handleCreateProposalSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Comprador / Lead</label>
+                <select 
+                  required
+                  value={newProposalLeadId}
+                  onChange={(e) => setNewProposalLeadId(e.target.value)}
+                  className="w-full text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                >
+                  <option value="">Selecione o Lead...</option>
+                  {leads.map(l => (
+                    <option key={l.id} value={l.id}>{l.name} ({l.phone})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Imóvel de Interesse</label>
+                <select 
+                  required
+                  value={newProposalPropertyId}
+                  onChange={(e) => setNewProposalPropertyId(e.target.value)}
+                  className="w-full text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                >
+                  <option value="">Selecione o Imóvel...</option>
+                  {properties.map(p => (
+                    <option key={p.id} value={p.id}>[{p.code}] {p.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tipo de Negócio</label>
+                  <select 
+                    value={newProposalType}
+                    onChange={(e) => setNewProposalType(e.target.value as any)}
+                    className="w-full text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                  >
+                    <option value="Venda">Venda</option>
+                    <option value="Aluguel">Aluguel</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Valor Oferecido (R$)</label>
+                  <input 
+                    type="number" 
+                    required
+                    placeholder="Ex: 1200000"
+                    value={newProposalValue}
+                    onChange={(e) => setNewProposalValue(e.target.value)}
+                    className="w-full text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Corretor Responsável</label>
+                <select 
+                  value={newProposalBrokerId}
+                  onChange={(e) => setNewProposalBrokerId(e.target.value)}
+                  className="w-full text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                >
+                  {brokers.map(b => (
+                    <option key={b.id} value={b.id}>{b.name} ({b.role})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Condições de Pagamento / Observações</label>
+                <textarea 
+                  rows={3}
+                  placeholder="Ex: Entrada de 40% + Saldo financiado pelo banco."
+                  value={newProposalNotes}
+                  onChange={(e) => setNewProposalNotes(e.target.value)}
+                  className="w-full text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white resize-none"
+                />
+              </div>
+
+              <button 
+                type="submit"
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2.5 rounded-lg"
+              >
+                Registrar Proposta Comercial
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL - NOVO AGENDAMENTO REDES SOCIAIS */}
+      {isNewSocialModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h4 className="font-bold text-white text-sm uppercase tracking-wider">Programar Publicação Diária</h4>
+              <button onClick={() => setIsNewSocialModalOpen(false)} className="text-slate-400 hover:text-white">✕</button>
+            </div>
+
+            <form onSubmit={handleCreateSocialScheduleSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Imóvel a Divulgar</label>
+                <select 
+                  required
+                  value={newSocialPropertyId}
+                  onChange={(e) => {
+                    setNewSocialPropertyId(e.target.value);
+                    // Also auto-generate a suggested caption if empty
+                    const prop = properties.find(p => p.id === e.target.value);
+                    if (prop) {
+                      setNewSocialCaption(`🏡 EXCLUSIVIDADE APEX! Confira esse maravilhoso(a) ${prop.type.toLowerCase()} no bairro ${prop.neighborhood}. Com ${prop.bedrooms} quartos (${prop.suites} suítes), ${prop.parkingSpaces} vagas e ${prop.areaPrivativa}m² de área privativa. Valor: R$ ${(prop.priceSale || prop.priceRent || 0).toLocaleString('pt-BR')}. Agende já sua visita! Código: ${prop.code}. #ImovelDosSonhos #ApexImoveis #LuxoSP #CuradoriaImobiliaria`);
+                    }
+                  }}
+                  className="w-full text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                >
+                  <option value="">Selecione o Imóvel...</option>
+                  {properties.map(p => (
+                    <option key={p.id} value={p.id}>[{p.code}] {p.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dia de Postagem</label>
+                  <select 
+                    value={newSocialDayOfWeek}
+                    onChange={(e) => setNewSocialDayOfWeek(e.target.value as any)}
+                    className="w-full text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                  >
+                    <option value="Segunda-feira">Segunda-feira</option>
+                    <option value="Terça-feira">Terça-feira</option>
+                    <option value="Quarta-feira">Quarta-feira</option>
+                    <option value="Quinta-feira">Quinta-feira</option>
+                    <option value="Sexta-feira">Sexta-feira</option>
+                    <option value="Sábado">Sábado</option>
+                    <option value="Domingo">Domingo</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Horário Agendado</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Ex: 12:00"
+                    value={newSocialTime}
+                    onChange={(e) => setNewSocialTime(e.target.value)}
+                    className="w-full text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rede Social Target</label>
+                <select 
+                  value={newSocialPlatform}
+                  onChange={(e) => setNewSocialPlatform(e.target.value as any)}
+                  className="w-full text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white"
+                >
+                  <option value="Instagram">Instagram</option>
+                  <option value="TikTok">TikTok</option>
+                  <option value="LinkedIn">LinkedIn</option>
+                  <option value="Facebook">Facebook</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Legenda / Copywriting Profissional</label>
+                <textarea 
+                  rows={4}
+                  placeholder="Deixe em branco para gerar automaticamente ou digite a sua legenda aqui..."
+                  value={newSocialCaption}
+                  onChange={(e) => setNewSocialCaption(e.target.value)}
+                  className="w-full text-xs p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 resize-none font-mono"
+                />
+              </div>
+
+              <button 
+                type="submit"
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2.5 rounded-lg"
+              >
+                Agendar Publicação Diária
               </button>
             </form>
           </div>

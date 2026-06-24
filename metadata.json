@@ -1,0 +1,6 @@
+{
+  "name": "ImobiSaaS",
+  "description": "Plataforma Imobiliária SaaS Premium - Portal Público & CRM de Alta Conversão",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
